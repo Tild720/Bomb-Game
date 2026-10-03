@@ -1,0 +1,28 @@
+{
+  "name": "Bomb-Game",
+  "servePort": 34873,
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$ignoreUnknownInstances": true,
+      "BombGame": { "$path": "src/ReplicatedStorage/BombGame", "$ignoreUnknownInstances": true }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$ignoreUnknownInstances": true,
+      "BombGame": { "$path": "src/ServerScriptService/BombGame", "$ignoreUnknownInstances": true }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$ignoreUnknownInstances": true,
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$ignoreUnknownInstances": true,
+        "BombGame": { "$path": "src/StarterPlayerScripts/BombGame", "$ignoreUnknownInstances": true }
+      }
+    },
+    "Workspace": { "$className": "Workspace", "$ignoreUnknownInstances": true },
+    "StarterGui": { "$className": "StarterGui", "$ignoreUnknownInstances": true }
+  }
+}
