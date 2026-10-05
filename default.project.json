@@ -24,5 +24,6 @@
     },
     "Workspace": { "$className": "Workspace", "$ignoreUnknownInstances": true },
     "StarterGui": { "$className": "StarterGui", "$ignoreUnknownInstances": true }
+    
   }
 }
