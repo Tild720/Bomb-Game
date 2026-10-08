@@ -36,7 +36,6 @@ function CoinService:Start(points, count)
 end
 
 function CoinService:SpawnBatch()
-	-- Prefer empty markers, but reuse them when the arena already has coins at every marker.
 	local empty, occupied = {}, {}
 	for _, coin in self.folder:GetChildren() do
 		if not coin:GetAttribute("CollectedAt") then occupied[coin:GetAttribute("SpawnIndex")] = true end
@@ -75,7 +74,6 @@ function CoinService:SpawnCoin(point, index)
 		if not player or not self.canCollect(player) or not humanoid or humanoid.Health <= 0
 			or not root or (root.Position - coin.Position).Magnitude > 7
 			or player:GetAttribute("StatsLoaded") ~= true or not stats or not stats:FindFirstChild("MONEY") then return end
-		-- Claim before rewarding: simultaneous touches can never pay twice.
 		claimed = true
 		coin.CanTouch = false
 		self.connections[coin]:Disconnect()

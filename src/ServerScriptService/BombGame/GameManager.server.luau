@@ -8,6 +8,7 @@ local TweenService = game:GetService("TweenService")
 
 local shared = ReplicatedStorage:WaitForChild("BombGame")
 local Config = require(shared:WaitForChild("Config"))
+local unseat = require(script.Parent:WaitForChild("Unseat"))
 Players.RespawnTime = Config.DeathRespawnDelay
 local system = workspace:WaitForChild("System")
 local lobby = system:WaitForChild("Lobby")
@@ -26,6 +27,9 @@ effects.Parent = shared
 local rewards = Instance.new("RemoteEvent")
 rewards.Name = "Reward"
 rewards.Parent = shared
+local afkRequest = Instance.new("RemoteEvent")
+afkRequest.Name = "AFKRequest"
+afkRequest.Parent = shared
 
 local alive = {}
 local playerConnections = {}
@@ -48,7 +52,6 @@ local dummyFolder
 local nextDummyId = 0
 local studioTesting = Config.StudioTesting.Enabled == true
 
--- 차단벽은 그대로 두고 캐릭터 전체의 통과 권한만 바꿉니다.
 for _, name in ipairs({ "LobbyPlayers", "InGamePlayers", "FieldBlocker", "LobbyBlocker" }) do
 	if not PhysicsService:IsCollisionGroupRegistered(name) then
 		PhysicsService:RegisterCollisionGroup(name)
@@ -110,7 +113,6 @@ local function awardPlacement(player, place)
 	end
 end
 
--- 실제 Player와 Studio 테스트용 Model을 같은 라운드에서 처리합니다.
 local function participantCharacter(player)
 	return player:IsA("Player") and player.Character or player
 end
@@ -185,7 +187,6 @@ local function playSound(kind, parent)
 	Debris:AddItem(sound, 3)
 end
 
--- 준비된 바닥만 Raycast하여 차단벽의 윗면에 스폰하지 않습니다.
 local function moveToFloor(player, floor, x, z)
 	local character, humanoid, root = characterParts(player)
 	if not character then return false end
@@ -195,6 +196,7 @@ local function moveToFloor(player, floor, x, z)
 	local center = floor.CFrame:PointToWorldSpace(Vector3.new(x, 0, z))
 	local hit = workspace:Raycast(center + Vector3.new(0, 100, 0), Vector3.new(0, -200, 0), params)
 	if not hit then return false end
+	unseat(humanoid)
 	root.AssemblyLinearVelocity = Vector3.zero
 	root.AssemblyAngularVelocity = Vector3.zero
 	local position = hit.Position + Vector3.new(0, humanoid.HipHeight + root.Size.Y / 2 + 0.5, 0)
@@ -211,10 +213,10 @@ end
 local function moveToSpawn(player, point)
 	local character, humanoid, root = characterParts(player)
 	if not character then return false end
+	unseat(humanoid)
 	root.AssemblyLinearVelocity, root.AssemblyAngularVelocity = Vector3.zero, Vector3.zero
 	local top = point.Position + Vector3.new(0, point.Size.Y / 2, 0)
 	local height = humanoid.HipHeight + root.Size.Y / 2 + 0.5 + Config.FieldHeightOffset
-	-- Spawn markers only supply a position; preserve the character's existing facing.
 	local target = CFrame.new(top + Vector3.new(0, height, 0)) * root.CFrame.Rotation
 	character:PivotTo(target * root.CFrame:ToObjectSpace(character:GetPivot()))
 	return true
@@ -235,6 +237,7 @@ obbyFinish.Touched:Connect(function(hit)
 	local stats = player:FindFirstChild("leaderstats")
 	if not stats or not stats:FindFirstChild("MONEY") then return end
 	obbyReadyAt[player] = now + 2
+	unseat(humanoid)
 	local height = obbySpawn.Size.Y / 2 + humanoid.HipHeight + root.Size.Y / 2 + 0.5
 	local target = CFrame.new(obbySpawn.Position + Vector3.new(0, height, 0)) * root.CFrame.Rotation
 	root.AssemblyLinearVelocity, root.AssemblyAngularVelocity = Vector3.zero, Vector3.zero
@@ -284,7 +287,6 @@ local function eliminate(player, leaving, bombDeath)
 	if not alive[player] then return end
 	local place = #survivors()
 	alive[player] = nil
-	-- 1등은 살아남은 승자에게만 결과 처리에서 지급합니다.
 	if roundStarted and not leaving and place >= 2 then awardPlacement(player, place) end
 	player:SetAttribute("EliminatedRound", roundId)
 	player:SetAttribute("InRound", false)
@@ -295,7 +297,6 @@ local function eliminate(player, leaving, bombDeath)
 			humanoid.BreakJointsOnDeath = true
 			humanoid.Health = 0
 			character:BreakJoints()
-			-- 죽은 Humanoid의 충돌 변경과 무관하게 몸을 폭발 위치에 남깁니다.
 			for _, part in ipairs(character:GetDescendants()) do
 				if part:IsA("BasePart") then
 					part.Anchored = true
@@ -342,7 +343,6 @@ local function attachBomb(player, isPass)
 		bomb = SkinCatalog.Clone(skinId)
 		bomb.Name = "HotPotatoBomb"
 		bomb.Parent = workspace
-		-- 원본은 보존하고 복제본의 물리 설정만 변경합니다.
 		local parts = { bomb }
 		for _, item in ipairs(bomb:GetDescendants()) do table.insert(parts, item) end
 		for _, part in ipairs(parts) do
@@ -360,7 +360,6 @@ local function attachBomb(player, isPass)
 			end
 		end
 	end
-	-- Roblox 캐릭터의 앞쪽은 로컬 -Z 방향입니다.
 	local rotation = skinId == "Bomb" and CFrame.Angles(math.rad(Config.BombRotationX), 0, 0)
 		or bomb:GetAttribute("SkinRotation")
 	bomb:PivotTo(torso.CFrame * CFrame.new(0, 0, -Config.BombForwardOffset) * rotation)
@@ -408,10 +407,11 @@ end
 local function eligiblePlayers()
 	local list = {}
 	for _, player in ipairs(Players:GetPlayers()) do
-		if player:GetAttribute("StatsLoaded") == true and characterParts(player) then table.insert(list, player) end
+		if player:GetAttribute("AFK") ~= true and player:GetAttribute("StatsLoaded") == true and characterParts(player) then
+			table.insert(list, player)
+		end
 	end
 	if studioTesting then
-		-- 참가자가 확정되기 전까지만 실제 접속 인원에 맞춰 보충합니다.
 		if phase == "Waiting" or phase == "Countdown" then
 			for index = #testDummies, 1, -1 do
 				if not characterParts(testDummies[index]) then
@@ -419,7 +419,7 @@ local function eligiblePlayers()
 					table.remove(testDummies, index)
 				end
 			end
-			local needed = math.max(0, Config.MinPlayers - #list)
+			local needed = #list > 0 and math.max(0, Config.MinPlayers - #list) or 0
 			while #testDummies > needed do
 				table.remove(testDummies):Destroy()
 			end
@@ -472,6 +472,7 @@ end
 
 local function setupPlayer(player)
 	player:SetAttribute("InRound", false)
+	player:SetAttribute("AFK", false)
 	local connections = {}
 	playerConnections[player] = connections
 	local function onCharacter(character)
@@ -501,6 +502,12 @@ Players.PlayerRemoving:Connect(function(player)
 	playerConnections[player] = nil
 end)
 for _, player in ipairs(Players:GetPlayers()) do setupPlayer(player) end
+
+afkRequest.OnServerEvent:Connect(function(player, enabled)
+	if typeof(enabled) ~= "boolean" or player:GetAttribute("AFK") == enabled then return end
+	player:SetAttribute("AFK", enabled)
+	if enabled then eliminate(player, true) end
+end)
 
 local function pause(seconds, cancel)
 	local deadline = workspace:GetServerTimeNow() + seconds
@@ -560,10 +567,10 @@ local function playRound()
 				nextBombAt, lastSecond = 0, -1
 			end
 		elseif now >= expiresAt then
-			-- 만료를 전달보다 먼저 처리합니다. 주변에는 피해를 주지 않습니다.
 			local victim = holder
 			local position = bomb.Position
-			effects:FireAllClients("Explosion", position)
+			local explosionSound = Config.ExplosionSounds[random:NextInteger(1, #Config.ExplosionSounds)]
+			effects:FireAllClients("Explosion", position, explosionSound)
 			eliminate(victim, false, true)
 		elseif bomb then
 			local seconds = math.ceil(expiresAt - now)
@@ -634,7 +641,6 @@ while true do
 		publish("Results", workspace:GetServerTimeNow() + Config.ResultTime, winner and participantName(winner) or "")
 		playSound(winner and "Victory" or "NoWinner")
 		pause(Config.ResultTime)
-		-- 예약 타이머 없이 한 루프에서 라운드를 마무리합니다.
 		for _, player in ipairs(survivors()) do
 			alive[player] = nil
 			player:SetAttribute("InRound", false)

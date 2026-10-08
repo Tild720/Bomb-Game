@@ -14,7 +14,6 @@ end
 
 function MapRotation.Align(model, destination)
 	local field = model:FindFirstChild("Field")
-	-- Keep every part's transform relative to Field, including a non-centered model pivot.
 	model:PivotTo(destination.CFrame * field.CFrame:Inverse() * model:GetPivot())
 end
 
@@ -58,7 +57,6 @@ function MapRotation:Load()
 	end
 	model.Parent = workspace
 	self.active = model
-	-- The map supplies its own floor; the alignment reference must not create a second floor.
 	self.destination.CanCollide = false
 	return model, points
 end

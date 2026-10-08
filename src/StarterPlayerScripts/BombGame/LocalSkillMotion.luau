@@ -45,7 +45,6 @@ function Motion.Start(id)
 		if humanoid.FloorMaterial ~= Enum.Material.Air then return false end
 		local v = root.AssemblyLinearVelocity
 		jump = { root = root, previousY = v.Y }
-		-- Keep the running animation/state and horizontal momentum; no extra JumpPower impulse.
 		root.AssemblyLinearVelocity = Vector3.new(v.X, Settings.JumpVelocity, v.Z)
 		return true
 	end
@@ -62,7 +61,6 @@ function Motion.Start(id)
 	local token = dash
 	local v = root.AssemblyLinearVelocity
 	root.AssemblyLinearVelocity = direction * Settings.DashSpeed + Vector3.new(0, v.Y, 0)
-	-- Independent deadline: no persistent constraint is created, even if a frame check fails.
 	task.delay(Settings.DashDuration, function() if dash == token then finish() end end)
 	return true
 end

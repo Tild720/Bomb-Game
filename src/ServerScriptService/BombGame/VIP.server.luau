@@ -20,7 +20,6 @@ end
 Players.PlayerAdded:Connect(loadVIP)
 for _, player in ipairs(Players:GetPlayers()) do task.spawn(loadVIP, player) end
 
--- 샘플 구매는 Robux와 저장 데이터에 영향을 주지 않습니다.
 request.OnServerEvent:Connect(function(player, version)
 	if typeof(version) ~= "number" then return end
 	if not RunService:IsStudio() or not Config.VIP.StudioSamplePurchase then

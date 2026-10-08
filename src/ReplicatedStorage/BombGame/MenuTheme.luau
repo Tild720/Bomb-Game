@@ -1,4 +1,3 @@
--- Final finish, after gradient-menu-ui: slate blue tones, rounded clipped patterns, visible outlines.
 local Theme = {}
 function Theme.Apply(gui)
 if gui:GetAttribute("ToneThemeVersion") == 8 then return end
@@ -40,7 +39,6 @@ local function pattern(parent, burst)
 	end
 	if burst then
 		local image = Instance.new("ImageLabel")
-		-- Texture resolved from the user's Decal asset 76707185718665.
 		image.Name, image.Image = "Sunburst", "rbxassetid://84880292033466"
 		image.BackgroundTransparency, image.ImageTransparency = 1, 0.9
 		image.ImageColor3 = Color3.fromRGB(225, 238, 255)
@@ -130,7 +128,6 @@ gui.MenuPanels.Spectate.Background.CounterLabel.UITextSizeConstraint.MaxTextSize
 gui.SkillHUD.Size = UDim2.fromOffset(220, 125)
 gui.SkillHUD.UseButton.Title.UITextSizeConstraint.MaxTextSize = 24
 gui.SkillHUD.UseButton.Status.UITextSizeConstraint.MaxTextSize = 24
--- Scale from the center so hover doesn't drift toward the lower right or cross panel edges.
 for _, object in gui:GetDescendants() do
 	if object:IsA("GuiButton") and object:FindFirstChild("InteractionScale") then
 		local shift = Vector2.new(0.5, 0.5) - object.AnchorPoint
@@ -139,7 +136,6 @@ for _, object in gui:GetDescendants() do
 		object.AnchorPoint = Vector2.new(0.5, 0.5)
 	end
 end
--- Fixed desktop text sizes avoid TextScaled silently shrinking despite a larger max size.
 local function readable(label, size, container)
 	label.TextScaled = false
 	label.TextWrapped = true
@@ -184,7 +180,6 @@ for _, name in { "Guide", "Spectate" } do
 		if label:IsA("TextLabel") then readable(label, label.Name == "Title" and 44 or (label.Name == "TargetLabel" and 44 or 32), background) end
 	end
 end
--- One outline per window; internal regions and buttons are separated by surface tone.
 local windows = { gui.SkillShop.Background, gui.MenuPanels.Shop.Background, gui.MenuPanels.Guide.Background, gui.MenuPanels.Spectate.Background }
 for _, background in windows do
 	for _, child in background:GetDescendants() do
@@ -192,7 +187,6 @@ for _, background in windows do
 		if child.ClassName == "UIShadow" and child.Parent ~= background then child:Destroy() end
 	end
 end
--- VIP has one content surface, not a card nested inside another framed well.
 vip.BackgroundTransparency = 1
 vip.ImageTransparency = 1
 gui.MenuPanels.Shop.Background.ListWell.Visible = false
@@ -211,7 +205,6 @@ for _, id in catalog.Order do
 	corner.CornerRadius, corner.Parent = UDim.new(0, 10), image
 	row.Title.Position, row.Title.Size = UDim2.fromScale(0.175, 0.03), UDim2.fromScale(0.54, 0.33)
 	row.Description.Position, row.Description.Size = UDim2.fromScale(0.175, 0.38), UDim2.fromScale(0.54, 0.57)
-	-- One compact text column next to the image; avoid vertically centered labels in oversized boxes.
 	row.Title.TextXAlignment, row.Title.TextYAlignment = Enum.TextXAlignment.Left, Enum.TextYAlignment.Top
 	row.Description.TextXAlignment, row.Description.TextYAlignment = Enum.TextXAlignment.Left, Enum.TextYAlignment.Top
 	local function layoutRow()

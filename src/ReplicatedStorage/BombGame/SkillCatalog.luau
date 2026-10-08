@@ -8,7 +8,6 @@ Catalog.Items = {
 	Swap = { Name = "SWAP", Image = "rbxassetid://101678945831696", Price = 25000, Cooldown = 8, Description = "Trade places with the nearest player ahead after a short warning." },
 }
 
--- Money and ownership are checked together on the server, without yielding.
 function Catalog.PurchaseError(id, owned, money)
 	local item = Catalog.Items[id]
 	if not item then return "Unknown skill." end

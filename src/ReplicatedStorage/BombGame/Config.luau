@@ -1,4 +1,3 @@
--- 테스트할 설정값은 이 파일에서 변경합니다.
 return {
 	MinPlayers = 2,
 	LobbyCountdown = 10,
@@ -9,15 +8,15 @@ return {
 	ResultTime = 5,
 	WalkSpeed = 20,
 	HolderSpeed = 24,
-	PassDistance = 4,
+	PassDistance = 8,
 	PassCooldown = 0.8,
 	CheckInterval = 0.1,
 	SpawnSpacing = 7,
 	FieldInset = 5,
-	FieldHeightOffset = 3.5, -- Field 배치 높이에 추가할 스튜드
+	FieldHeightOffset = 3.5,
 	BombForwardOffset = 2,
 	BombRotationX = -180,
-	HolderAnimationId = "rbxassetid://96785512575883",
+	HolderAnimationId = "rbxassetid://138314678580891",
 	MessageDuration = 3,
 	EliminationMessageDuration = 2.5,
 	DeathRespawnDelay = 3,
@@ -31,7 +30,7 @@ return {
 		IntervalMax = 7,
 		SpawnOffset = 1,
 		Reward = 50,
-		SpinSpeed = 120, -- degrees per second, around world Y
+		SpinSpeed = 120,
 		FadeTime = 0.3,
 		PickupSound = "button.wav",
 		PickupVolume = 0.5,
@@ -47,8 +46,8 @@ return {
 		CloseSound = "switch.wav",
 	},
 	VIP = {
-		GamePassId = 0, -- 실제 패스 ID를 넣으면 Roblox 구매창을 사용합니다.
-		StudioSamplePurchase = true, -- 무료 샘플은 Studio 세션에서만 적용합니다.
+		GamePassId = 0,
+		StudioSamplePurchase = true,
 	},
 	SkillSounds = {
 		DoubleJump = { Name = "Short spring sound.wav", Volume = 0.3, Speed = 1.12 },
@@ -64,12 +63,10 @@ return {
 		Pass = 25,
 		Placements = { 400, 250, 100 },
 	},
-	-- Enabled가 true면 Studio와 실제 서버 모두 부족한 참가자를 Dummy로 채웁니다.
 	StudioTesting = {
 		Enabled = true,
-		DummyName = "Dummy", -- ReplicatedStorage의 원본 모델 이름
+		DummyName = "Dummy",
 	},
-	-- Classic Sound Pack > Songs의 기존 곡을 순서대로 반복합니다.
 	Bgm = {
 		Volume = 0.1,
 		FadeTime = 0.6,
@@ -85,6 +82,13 @@ return {
 			"Daniel Bautista  - Gothic",
 		},
 	},
+	ExplosionSounds = {
+		"uuhhh.mp3",
+		"Kid saying Ouch.wav",
+		"Kerplunk.wav",
+		"splat.wav",
+		"Rubber band sling shot.mp3",
+	},
 	Sounds = {
 		Start = "switch.wav",
 		Countdown = "clickfast.wav",
@@ -94,7 +98,7 @@ return {
 		NoWinner = "bass.wav",
 		Pass = "button.wav",
 		Warning = "electronicpingshort.wav",
-		Explosion = "Rocket shot.wav",
+		Explosion = "uuhhh.mp3",
 		Notification = "electronicpingshort.wav",
 		ObbyComplete = "victory.wav",
 	},

@@ -4,6 +4,7 @@ local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local Catalog = require(game:GetService("ReplicatedStorage"):WaitForChild("BombGame"):WaitForChild("SkillCatalog"))
 local SkinCatalog = require(game:GetService("ReplicatedStorage").BombGame:WaitForChild("BombSkinCatalog"))
+local WinRankStore = require(script.Parent:WaitForChild("WinRankStore"))
 
 local studio = RunService:IsStudio()
 local store = DataStoreService:GetDataStore(studio and "BombGameLeaderstats_Studio_v1" or "BombGameLeaderstats_v1")
@@ -38,7 +39,6 @@ local function save(player, release)
 	local equippedSkin = player:GetAttribute("EquippedBombSkin") or "Bomb"
 	local ok, result = retry(function()
 		return store:UpdateAsync("Player_" .. player.UserId, function(data)
-			-- 늦게 끝난 이전 서버의 저장이 새 세션을 덮어쓰지 못합니다.
 			if not data or not data.Session or data.Session.Id ~= session.id then return nil end
 			data.MONEY, data.WIN = money, wins
 			data.OwnedSkills, data.EquippedSkill = owned, equipped
@@ -57,6 +57,7 @@ local function save(player, release)
 			session.closed = true
 			sessions[player] = nil
 		end
+		WinRankStore.Publish(player.UserId, wins)
 	else
 		warn("Leaderstats save failed for " .. player.UserId .. ": " .. tostring(result))
 		if player.Parent == Players then
@@ -83,7 +84,6 @@ local function load(player)
 	end)
 	if not ok or not result then
 		warn("Leaderstats load failed for " .. player.UserId .. ": " .. tostring(result))
-		-- API가 꺼진 Studio에서도 게임은 시험하되, 빈 값을 저장하지 않습니다.
 		if studio and not ok then
 			result = { MONEY = 0, WIN = 0 }
 		else
@@ -116,6 +116,7 @@ local function load(player)
 		return
 	end
 	player:SetAttribute("StatsLoaded", true)
+	if session.loaded then task.spawn(WinRankStore.Publish, player.UserId, stats.WIN.Value) end
 end
 
 Players.PlayerAdded:Connect(load)

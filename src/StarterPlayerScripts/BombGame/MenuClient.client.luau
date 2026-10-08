@@ -89,7 +89,6 @@ local function notify(message)
 	end)
 end
 
--- 원래 투명도를 저장하여 기존 텍스처와 그림자를 유지하며 페이드합니다.
 local noticeEvent = Instance.new("BindableEvent")
 noticeEvent.Name = "MenuNotice"
 noticeEvent.Event:Connect(notify)
@@ -287,7 +286,6 @@ end)
 
 for _, name in ipairs({ "Shop", "Guide", "Spectate" }) do
 	local button = gui[name .. "Button"]
-	-- Keep the authored position while scaling around the button's center.
 	local shift = Vector2.new(0.5, 0.5) - button.AnchorPoint
 	button.Position += UDim2.new(button.Size.X.Scale * shift.X, button.Size.X.Offset * shift.X,
 		button.Size.Y.Scale * shift.Y, button.Size.Y.Offset * shift.Y)
@@ -354,7 +352,6 @@ player:GetAttributeChangedSignal("VIP"):Connect(function()
 	end
 end)
 
--- VIP 소유 여부는 서버가 복제한 Attribute만 사용합니다.
 TextChatService.OnIncomingMessage = function(message)
 	local source = message.TextSource
 	local speaker = source and Players:GetPlayerByUserId(source.UserId)

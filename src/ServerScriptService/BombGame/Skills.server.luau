@@ -6,6 +6,7 @@ local Debris = game:GetService("Debris")
 local shared = ReplicatedStorage:WaitForChild("BombGame")
 local Catalog = require(shared:WaitForChild("SkillCatalog"))
 local Config = require(shared:WaitForChild("Config"))
+local unseat = require(script.Parent:WaitForChild("Unseat"))
 local state = shared:WaitForChild("State")
 local hitbox = workspace:WaitForChild("System"):WaitForChild("ShopHitbox")
 local request = Instance.new("RemoteEvent")
@@ -183,11 +184,9 @@ local function useSkill(player)
 		end
 		doubleJumps[player] = character
 		consume(player, id)
-		-- The owning client predicts this short jump; server validates and consumes it once.
 		glow(character, Color3.fromRGB(146, 226, 255), 0.4)
 	elseif id == "Dash" then
 		consume(player, id)
-		-- No ownership handoff or persistent server force for the player's own dash.
 		glow(character, Color3.fromRGB(123, 232, 255), 0.25)
 	elseif id == "Push" then
 		local target = nearest(player, root, 9)
@@ -237,8 +236,8 @@ local function useSkill(player)
 		task.delay(0.65, function()
 			if swaps[player] ~= token or swaps[target] ~= token then return end
 			swaps[player], swaps[target] = nil, nil
-			local current, _, currentRoot = parts(player)
-			local other, _, otherRoot = parts(target)
+			local current, currentHumanoid, currentRoot = parts(player)
+			local other, otherHumanoid, otherRoot = parts(target)
 			if not isPlaying(player) or not isPlaying(target) or roundId ~= state:GetAttribute("RoundId")
 				or current ~= character or other ~= targetCharacter or not currentRoot or not otherRoot then
 				return reply(player, false, "Swap canceled: the target is no longer available.")
@@ -250,11 +249,12 @@ local function useSkill(player)
 				return reply(player, false, "Swap canceled: the target moved away or the path is blocked.")
 			end
 			consume(player, id)
+			unseat(currentHumanoid)
+			unseat(otherHumanoid)
 			stopMotion(currentRoot, true)
 			stopMotion(otherRoot, true)
 			fx:FireAllClients("Swap", other, otherRoot.Position)
 			skillSound("Swap", otherRoot)
-			-- Move characters, never the bomb owner. Its existing weld follows its owner.
 			current:PivotTo(current:GetPivot() + delta)
 			other:PivotTo(other:GetPivot() - delta)
 			currentRoot.AssemblyLinearVelocity, otherRoot.AssemblyLinearVelocity = Vector3.zero, Vector3.zero
@@ -355,5 +355,4 @@ end)
 
 Players.PlayerRemoving:Connect(function(player)
 	cooldowns[player], requests[player], doubleJumps[player] = nil, nil, nil
-	-- Pending swaps self-cancel after their warning, clearing both participants.
 end)

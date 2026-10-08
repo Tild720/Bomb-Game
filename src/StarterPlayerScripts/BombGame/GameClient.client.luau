@@ -30,6 +30,10 @@ local popupRandom = Random.new()
 local labelTweens = {}
 local labelTargets = {}
 local labelStrokeTransparency = {}
+local musicGroup = Instance.new("SoundGroup")
+musicGroup.Name = "HotPotatoMusic"
+musicGroup.Volume = 1
+musicGroup.Parent = SoundService
 local songs = SoundService:WaitForChild("Classic Sound Pack"):WaitForChild("Songs")
 local musicMode
 local music
@@ -41,7 +45,6 @@ local musicFadedIn = false
 local nextMusicAttempt = 0
 local musicIndex = { Lobby = 0, InGame = 0 }
 
--- 플레이어 이름의 기호가 RichText 태그로 해석되지 않도록 처리합니다.
 local function escapeRichText(text)
 	return tostring(text):upper():gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
 end
@@ -74,6 +77,7 @@ local function startNextMusic(now)
 			music.Looped = false
 			music.TimePosition = 0
 			music.Volume = 0
+			music.SoundGroup = musicGroup
 			music.Parent = SoundService
 			musicStartedAt = now
 			musicFadedIn = false
@@ -86,7 +90,6 @@ local function startNextMusic(now)
 	nextMusicAttempt = now + Config.Bgm.LoadTimeout
 end
 
--- 각 플레이어가 로비/경기 상태에 맞는 곡을 듣습니다. 실패한 곡은 건너뜁니다.
 local function updateMusic(now)
 	local mode = player:GetAttribute("InRound") == true and "InGame" or "Lobby"
 	if mode ~= musicMode then
@@ -105,11 +108,12 @@ local function updateMusic(now)
 	end
 end
 
-local function playLocalSound(kind)
-	local source = soundPack:FindFirstChild(Config.Sounds[kind])
+local function playLocalSound(kind, soundName)
+	local source = soundPack:FindFirstChild(soundName or Config.Sounds[kind])
 	if not source or not source:IsA("Sound") then return end
 	local sound = source:Clone()
 	sound.Name = "HotPotato" .. kind
+	if kind == "Explosion" then sound.SoundId = sound.SoundId:gsub("rbxasset://sounds//", "rbxasset://sounds/") end
 	sound.Looped = false
 	sound.TimePosition = 0
 	sound.Volume = math.min(source.Volume, 0.45)
@@ -123,13 +127,11 @@ rewards.OnClientEvent:Connect(function(amount, reason)
 	local popup = Instance.new("TextLabel")
 	popup.Name = "MoneyReward"
 	popup.AnchorPoint = Vector2.new(0.5, 0.5)
-	-- 중앙 70% 영역 안의 좌우 사이드에 작은 알림을 표시합니다.
 	popup.Size = UDim2.fromScale(0.16, 0.05)
 	popup.Rotation = popupRandom:NextNumber(-15, 15)
 	local topInset, bottomInset = GuiService:GetGuiInset()
 	local viewport = workspace.CurrentCamera.ViewportSize
 	if not gui.IgnoreGuiInset then viewport -= topInset + bottomInset end
-	-- 이유 텍스트와 회전/팝 효과의 여백까지 중앙 60% 안에 둡니다.
 	local angle = math.rad(math.abs(popup.Rotation))
 	local halfWidth = math.min(viewport.X * 0.08, viewport.Y * 0.2)
 	local halfHeight = viewport.Y * 0.0425
@@ -190,7 +192,6 @@ rewards.OnClientEvent:Connect(function(amount, reason)
 	Debris:AddItem(popup, Config.RewardPopupDuration + 0.45)
 end)
 
--- 표시 요청을 기준으로 애니메이션을 관리하여 매 UI 갱신마다 재시작하지 않습니다.
 local function setLabel(label, text, visible, emphasis)
 	local previous = labelTargets[label]
 	if previous and previous.visible == visible and (not visible or previous.text == text) then return end
@@ -209,7 +210,6 @@ local function setLabel(label, text, visible, emphasis)
 	local scale = label:FindFirstChild("AnimationScale")
 	if not visible then
 		if not label.Visible then return end
-		-- 문구는 남겨 둔 채 투명하게 만든 뒤 숨깁니다.
 		local fadeInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 		local fadeOut = TweenService:Create(label, fadeInfo, {
 			TextTransparency = 1,
@@ -217,7 +217,6 @@ local function setLabel(label, text, visible, emphasis)
 		})
 		table.insert(labelTweens[label], fadeOut)
 		fadeOut.Completed:Once(function(playbackState)
-			-- 퇴장 중 새 문구가 표시되면 이전 완료 콜백이 숨기지 못하게 합니다.
 			if playbackState == Enum.PlaybackState.Completed and labelTargets[label] == target then
 				label.Visible = false
 			end
@@ -292,7 +291,6 @@ local function shakeCamera(strong)
 	table.insert(shakes, { started = os.clock(), duration = strong and 0.55 or 0.22, strength = strong and 1 or 0.25 })
 end
 
--- 매 프레임 기본 카메라 계산 전 이전 오프셋을 제거하여 흔들림이 누적되지 않습니다.
 RunService:BindToRenderStep("HotPotatoShakeReset", Enum.RenderPriority.Camera.Value - 1, function()
 	if previousCamera and previousCamera == workspace.CurrentCamera then
 		previousCamera.CFrame *= previousShake:Inverse()
@@ -389,7 +387,6 @@ local function updatePanic(now)
 	panicPanel.Rotation = math.sin(now * 29) * 4 + math.sin(now * 43) * 2
 end
 
--- UI는 Studio의 기존 인스턴스를 갱신하며 서버 시각으로 카운트다운합니다.
 local function updateUi()
 	local now = workspace:GetServerTimeNow()
 	updateMusic(now)
@@ -476,7 +473,7 @@ local function updateUi()
 	end
 end
 
-effects.OnClientEvent:Connect(function(kind, position)
+effects.OnClientEvent:Connect(function(kind, position, soundName)
 	if kind == "Notice" then
 		local menu = player.PlayerGui:FindFirstChild("SubGui")
 		local notice = menu and menu:FindFirstChild("MenuNotice")
@@ -485,7 +482,7 @@ effects.OnClientEvent:Connect(function(kind, position)
 	end
 	if kind == "Explosion" then
 		shakeCamera(true)
-		playLocalSound("Explosion")
+		playLocalSound("Explosion", soundName)
 		local explosion = Instance.new("Explosion")
 		explosion.Name = "HotPotatoExplosion"
 		explosion.Position = position

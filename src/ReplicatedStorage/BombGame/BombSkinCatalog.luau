@@ -50,12 +50,21 @@ function Catalog.Clone(id)
 	local source = folder:FindFirstChild(item.TemplateName)
 	if not source or not source:IsA("BasePart") then source = ReplicatedStorage:WaitForChild("Bomb") end
 	local bomb = source:Clone()
+	bomb.PivotOffset = CFrame.identity
 	for _, child in bomb:GetDescendants() do
 		if child:IsA("BaseScript") or child:IsA("ModuleScript") or child:IsA("Sound")
 			or child:IsA("BillboardGui") or child:IsA("JointInstance") or child:IsA("WeldConstraint") then child:Destroy() end
 	end
 	local timer = ReplicatedStorage:WaitForChild("Bomb"):FindFirstChild("BombTimer")
-	if timer then timer:Clone().Parent = bomb end
+	if timer then
+		local display = timer:Clone()
+		display.Adornee = bomb
+		display.StudsOffset = Vector3.zero
+		display.ExtentsOffset, display.ExtentsOffsetWorldSpace = Vector3.zero, Vector3.zero
+		display.StudsOffsetWorldSpace = Vector3.new(0, bomb.Size.Y / 2 + 1.25, 0)
+		display.AlwaysOnTop = true
+		display.Parent = bomb
+	end
 	bomb:SetAttribute("BombSkinId", id)
 	bomb:SetAttribute("SkinRotation", source.CFrame.Rotation)
 	return bomb
